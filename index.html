@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#16201a">
+<title>Dukaan Khata</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: single mobile column. Sticky tabs on top, entry form + list in the middle, fixed totals panel at the bottom. */
+:root {
+  --bg: #f2f4ef;
+  --surface: #ffffff;
+  --fg: #16201a;
+  --muted: #667068;
+  --line: #dde2d9;
+  --debit: #b53c2b;
+  --debit-soft: #f8e4df;
+  --credit: #1c7a4b;
+  --credit-soft: #ddf1e5;
+  --panel: #16201a;
+  --panel-fg: #f2f4ef;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101612;
+    --surface: #1a221c;
+    --fg: #eaf0ea;
+    --muted: #9aa69c;
+    --line: #2b362d;
+    --debit: #f0897a;
+    --debit-soft: #3a211d;
+    --credit: #67d395;
+    --credit-soft: #17301f;
+    --panel: #e9efe9;
+    --panel-fg: #101612;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101612;
+  --surface: #1a221c;
+  --fg: #eaf0ea;
+  --muted: #9aa69c;
+  --line: #2b362d;
+  --debit: #f0897a;
+  --debit-soft: #3a211d;
+  --credit: #67d395;
+  --credit-soft: #17301f;
+  --panel: #e9efe9;
+  --panel-fg: #101612;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.4;
+  padding-inline: 16px;
+  padding-block: 0 220px;
+  -webkit-tap-highlight-color: transparent;
+}
+.wrap { max-width: 520px; margin-inline: auto; }
+.num { font-variant-numeric: tabular-nums; }
+
+header { padding-block: 18px 12px; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+h1 { font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; letter-spacing: -0.02em; margin: 0; }
+.today { color: var(--muted); font-size: 0.85rem; }
+
+/* tabs */
+.tabs {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--bg); padding-block: 6px 12px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+.tab {
+  appearance: none; border: 1.5px solid var(--line); background: var(--surface); color: var(--fg);
+  border-radius: 12px; padding: 10px 12px; text-align: left; font: inherit; cursor: pointer; min-width: 0;
+}
+.tab .t-name { font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; display: block; }
+.tab .t-sum { font-size: 0.85rem; color: var(--muted); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tab[aria-selected="true"].is-debit { border-color: var(--debit); background: var(--debit-soft); }
+.tab[aria-selected="true"].is-credit { border-color: var(--credit); background: var(--credit-soft); }
+.tab[aria-selected="true"].is-debit .t-name { color: var(--debit); }
+.tab[aria-selected="true"].is-credit .t-name { color: var(--credit); }
+.tab:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
+
+/* form */
+.hint { margin: 4px 0 10px; color: var(--muted); font-size: 0.9rem; }
+form { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.row { display: grid; grid-template-columns: 1fr 120px; gap: 8px; }
+@media (max-width: 360px) { .row { grid-template-columns: 1fr; } }
+input {
+  font: inherit; color: var(--fg); background: var(--surface);
+  border: 1.5px solid var(--line); border-radius: 12px; padding: 12px; width: 100%; min-width: 0;
+}
+input::placeholder { color: var(--muted); }
+.add {
+  appearance: none; border: 0; border-radius: 12px; padding: 13px; font: inherit; font-weight: 600; cursor: pointer;
+  font-family: var(--font-display); font-size: 1rem; color: #fff;
+}
+.add.is-debit { background: var(--debit); }
+.add.is-credit { background: var(--credit); }
+:root[data-theme="dark"] .add { color: #101612; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .add { color: #101612; } }
+.err { color: var(--debit); font-size: 0.85rem; min-height: 1.2em; margin: 0; }
+
+/* list */
+.list-head { display: flex; justify-content: space-between; align-items: baseline; margin-block: 18px 8px; color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; }
+ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+li { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px; }
+.item-title { font-weight: 600; overflow-wrap: anywhere; }
+.item-date { color: var(--muted); font-size: 0.8rem; }
+.item-amt { font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; white-space: nowrap; }
+.item-amt.is-debit { color: var(--debit); }
+.item-amt.is-credit { color: var(--credit); }
+.del { appearance: none; border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 10px; font: inherit; font-size: 0.8rem; padding: 7px 10px; cursor: pointer; }
+.del.sure { background: var(--debit); border-color: var(--debit); color: #fff; }
+:root[data-theme="dark"] .del.sure { color: #101612; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .del.sure { color: #101612; } }
+.empty { border: 1.5px dashed var(--line); border-radius: 12px; padding: 22px 16px; color: var(--muted); text-align: center; }
+
+/* totals */
+.totals {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  background: var(--panel); color: var(--panel-fg);
+  border-radius: 22px 22px 0 0;
+  padding: 16px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+}
+.totals-in { max-width: 520px; margin-inline: auto; }
+.net-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.7; }
+.net { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.2rem, 11vw, 3.4rem); letter-spacing: -0.03em; line-height: 1.05; overflow-wrap: anywhere; }
+.net.pos { color: var(--net-pos, #67d395); }
+.net.neg { color: var(--net-neg, #ff9a8a); }
+:root { --net-pos: #67d395; --net-neg: #ff9a8a; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --net-pos: #1c7a4b; --net-neg: #b53c2b; } }
+:root[data-theme="dark"] { --net-pos: #1c7a4b; --net-neg: #b53c2b; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; padding-top: 10px; border-top: 1px solid color-mix(in srgb, var(--panel-fg) 22%, transparent); }
+.pair small { display: block; font-size: 0.75rem; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.08em; }
+.pair b { font-family: var(--font-display); font-size: 1.15rem; overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: no-preference) { .tab, .add, li { transition: background-color .15s, border-color .15s; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Dukaan Khata</h1>
+    <span class="today num" id="today"></span>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Debit ya Credit">
+    <button class="tab is-debit" role="tab" id="tab-debit" aria-selected="true" aria-controls="panel" data-tab="debit">
+      <span class="t-name">Debit</span><span class="t-sum num" id="sum-debit"></span>
+    </button>
+    <button class="tab is-credit" role="tab" id="tab-credit" aria-selected="false" aria-controls="panel" data-tab="credit">
+      <span class="t-name">Credit</span><span class="t-sum num" id="sum-credit"></span>
+    </button>
+  </div>
+
+  <section id="panel" role="tabpanel">
+    <p class="hint" id="hint"></p>
+    <form id="form" autocomplete="off" novalidate>
+      <div class="row">
+        <input id="title" type="text" maxlength="60" placeholder="Title" aria-label="Chota title">
+        <input id="amount" type="text" inputmode="decimal" placeholder="₹ Price" aria-label="Price">
+      </div>
+      <button class="add is-debit" id="addBtn" type="submit">Debit jodo</button>
+      <p class="err" id="err" role="alert"></p>
+    </form>
+
+    <div class="list-head"><span id="listTitle"></span><span class="num" id="count"></span></div>
+    <ul id="list"></ul>
+  </section>
+</div>
+
+<div class="totals">
+  <div class="totals-in">
+    <div class="net-label" id="netLabel">Total (Revenue − Investment)</div>
+    <div class="net num" id="net">₹0</div>
+    <div class="pair">
+      <div><small>Total Investment</small><b class="num" id="inv">₹0</b></div>
+      <div><small>Total Revenue</small><b class="num" id="rev">₹0</b></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var KEY = "dukaan-khata-v1";
+  var state = { debit: [], credit: [], tab: "debit" };
+  var pendingDelete = null;
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (!raw) return;
+      var d = JSON.parse(raw);
+      if (d && Array.isArray(d.debit)) state.debit = d.debit;
+      if (d && Array.isArray(d.credit)) state.credit = d.credit;
+      if (d && (d.tab === "debit" || d.tab === "credit")) state.tab = d.tab;
+    } catch (e) {}
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  var fmt = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 });
+  function money(n) { return "₹" + fmt.format(Math.abs(n)); }
+  function sum(arr) { return arr.reduce(function (s, x) { return s + x.amount; }, 0); }
+
+  var $ = function (id) { return document.getElementById(id); };
+  var copy = {
+    debit: { hint: "Kuch kharida? Title aur price likho.", btn: "Debit jodo", list: "Purchases", empty: "Abhi koi purchase nahi. Upar title aur price daal ke pehla debit jodo." },
+    credit: { hint: "Site se payment aaya? Title aur amount likho.", btn: "Credit jodo", list: "Payments aaye", empty: "Abhi koi payment nahi. Upar title aur amount daal ke pehla credit jodo." }
+  };
+
+  function dateStr(ts) {
+    return new Date(ts).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  }
+
+  function render() {
+    var t = state.tab, c = copy[t];
+    ["debit", "credit"].forEach(function (k) {
+      var b = $("tab-" + k);
+      b.setAttribute("aria-selected", String(k === t));
+      b.tabIndex = k === t ? 0 : -1;
+      $("sum-" + k).textContent = money(sum(state[k])) + " · " + state[k].length;
+    });
+    $("hint").textContent = c.hint;
+    var btn = $("addBtn");
+    btn.textContent = c.btn;
+    btn.className = "add is-" + t;
+    $("listTitle").textContent = c.list;
+    $("count").textContent = state[t].length + " entries";
+
+    var ul = $("list");
+    ul.textContent = "";
+    var items = state[t].slice().sort(function (a, b) { return b.ts - a.ts; });
+    if (!items.length) {
+      var e = document.createElement("div");
+      e.className = "empty";
+      e.textContent = c.empty;
+      ul.appendChild(e);
+    }
+    items.forEach(function (it) {
+      var li = document.createElement("li");
+      var left = document.createElement("div");
+      var ti = document.createElement("div");
+      ti.className = "item-title";
+      ti.textContent = it.title;
+      var da = document.createElement("div");
+      da.className = "item-date num";
+      da.textContent = dateStr(it.ts);
+      left.appendChild(ti);
+      left.appendChild(da);
+      var am = document.createElement("div");
+      am.className = "item-amt num is-" + t;
+      am.textContent = (t === "debit" ? "−" : "+") + money(it.amount);
+      var del = document.createElement("button");
+      del.type = "button";
+      var sure = pendingDelete === it.id;
+      del.className = "del" + (sure ? " sure" : "");
+      del.textContent = sure ? "Pakka?" : "Hatao";
+      del.setAttribute("aria-label", "Entry hatao: " + it.title);
+      del.addEventListener("click", function () {
+        if (pendingDelete === it.id) {
+          state[t] = state[t].filter(function (x) { return x.id !== it.id; });
+          pendingDelete = null;
+          save();
+        } else {
+          pendingDelete = it.id;
+        }
+        render();
+      });
+      li.appendChild(left);
+      li.appendChild(am);
+      li.appendChild(del);
+      ul.appendChild(li);
+    });
+
+    var inv = sum(state.debit), rev = sum(state.credit), net = rev - inv;
+    $("inv").textContent = money(inv);
+    $("rev").textContent = money(rev);
+    var n = $("net");
+    n.textContent = (net < 0 ? "−" : "") + money(net);
+    n.className = "net num " + (net < 0 ? "neg" : "pos");
+    $("netLabel").textContent = net < 0 ? "Nuksaan (Revenue − Investment)" : net > 0 ? "Munafa (Revenue − Investment)" : "Total (Revenue − Investment)";
+  }
+
+  document.querySelectorAll(".tab").forEach(function (b) {
+    b.addEventListener("click", function () {
+      state.tab = b.getAttribute("data-tab");
+      pendingDelete = null;
+      $("err").textContent = "";
+      save();
+      render();
+    });
+  });
+
+  $("form").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var title = $("title").value.trim();
+    var amt = parseFloat($("amount").value.replace(/,/g, ""));
+    if (!title) { $("err").textContent = "Chota title likho."; $("title").focus(); return; }
+    if (!isFinite(amt) || amt <= 0) { $("err").textContent = "Sahi price likho, jaise 499 ya 1250.50."; $("amount").focus(); return; }
+    state[state.tab].push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: title, amount: Math.round(amt * 100) / 100, ts: Date.now() });
+    $("title").value = "";
+    $("amount").value = "";
+    $("err").textContent = "";
+    $("title").focus();
+    save();
+    render();
+  });
+
+  $("today").textContent = dateStr(Date.now());
+  load();
+  render();
+})();
+</script>
+</body>
+</html>
